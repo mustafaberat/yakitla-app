@@ -1,32 +1,43 @@
-# Yakıtla — Google Play öncesi checklist
+# Yakıtla — Google Play checklist
 
-## İkon (seçildi)
+## Hazır
 
-Kaynak: `play/yakitla-icon-d-split-y.png` → `assets/icon/app_icon.png`
+- İkon: `play/yakitla-icon-d-split-y.png` → launcher + `play/icon-512.png`
+- Feature graphic: `play/feature-graphic.png` (1024×500)
+- Ekran görselleri: `play/gorseller/{tr,en,ar}/01-*.png` (+ `feature.png`)
+- Listing metinleri: `play/listings.json` (tr-TR, en-US, ar)
+- Release: `play/versions/1/yakitla.aab` + `.apk`
+- Keystore: `android/keystore/yakitla-upload.jks` (gitignore)
+- Paket: `com.arusoft.yakitla` · Developer: ARU Soft
+- Gizlilik: https://yakitla.vercel.app/privacy
+- Destek: arusoft.company@gmail.com
+- Dil: TR / EN / AR (Ayarlar)
+
+## Sende (Play Console — API app oluşturamaz)
+
+1. [Uygulama oluştur](https://play.google.com/console/u/0/developers/6672624803399105178/app-create)
+   - Ad: **Yakıtla**
+   - Varsayılan dil: Türkçe (Türkiye)
+   - Uygulama / Ücretsiz
+2. Oluşunca agent’a söyle; listing + screenshot + AAB yükleriz:
 
 ```bash
-dart run flutter_launcher_icons
+cd mobile-apps
+python3 lib/play/upload_listings.py \
+  --package com.arusoft.yakitla \
+  --file yakitla/play/listings.json
+
+python3 lib/play/upload_screenshots.py \
+  --package com.arusoft.yakitla \
+  --dir yakitla/play/gorseller \
+  --types phone,feature,icon
+
+python3 lib/play/upload_aab.py \
+  --package com.arusoft.yakitla \
+  --aab yakitla/play/versions/1/yakitla.aab \
+  --whatsnew yakitla/play/whatsnew.txt \
+  --track internal \
+  --status draft
 ```
 
-## Uygulama kimliği
-
-- Paket: `com.arusoft.yakitla`
-- Developer: ARU Soft (Play Console account.json)
-- [ ] `android/key.properties` + `android/keystore/yakitla-upload.jks`
-- [ ] `versionName` / `versionCode`: `1.0.0` / `1`
-
-## Store listing (tr-TR, en-US, ar)
-
-- [ ] Uygulama adı: **Yakıtla**
-- [ ] Kısa / uzun açıklama (3 dil)
-- [ ] Feature graphic 1024×500
-- [ ] Telefon ekran görselleri (dil başına)
-- [ ] Gizlilik politikası URL
-- [ ] İletişim: arusoft.company@gmail.com
-
-## Teknik
-
-- [ ] Production API base (Vercel)
-- [ ] `APP_ROOT=. ../lib/scripts/install_release.sh`
-- [ ] `play/whatsnew.txt` (tr-TR, en-US, ar)
-- [ ] Smoke: Fiyatlar → ilçe → Git → Hesapla
+3. Console’da Data safety + Content rating + Countries doldur.

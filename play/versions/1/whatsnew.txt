@@ -1,0 +1,9 @@
+<tr-TR>
+İlk sürüm: fiyat karşılaştırma, yol maliyeti hesaplama, TR/EN/AR dil desteği.
+</tr-TR>
+<en-US>
+First release: compare fuel prices, estimate trip cost, TR/EN/AR languages.
+</en-US>
+<ar>
+الإصدار الأول: مقارنة أسعار الوقود، حساب تكلفة الرحلة، ودعم التركية والإنجليزية والعربية.
+</ar>

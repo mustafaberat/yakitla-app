@@ -1,0 +1,17 @@
+{
+  "tr-TR": {
+    "title": "Yakıtla: Akaryakıt Fiyatları",
+    "shortDescription": "Türkiye akaryakıt fiyatlarını karşılaştır, yol maliyetini hesapla",
+    "fullDescription": "Yakıtla ile Türkiye’deki akaryakıt istasyon fiyatlarını il ve ilçe bazında gör.\n\n• Benzin 95 ve motorin fiyatlarını karşılaştır\n• En uygun fiyatı hızlıca bul\n• Yakındaki istasyona Google Haritalar ile git\n• Yol mesafesi ve tüketime göre maliyet hesapla\n• Türkçe, İngilizce ve Arapça dil desteği\n\nFiyatlar bilgilendirme amaçlıdır; pompa fiyatı farklılık gösterebilir.\n\nGeliştirici: ARU Soft"
+  },
+  "en-US": {
+    "title": "Yakıtla: Fuel Prices TR",
+    "shortDescription": "Compare Turkey fuel prices and estimate your trip cost",
+    "fullDescription": "Yakıtla helps you browse fuel station prices across Turkey by city and district.\n\n• Compare Gasoline 95 and diesel prices\n• Spot the best price quickly\n• Open directions in Google Maps\n• Estimate trip cost from distance and consumption\n• Turkish, English, and Arabic\n\nPrices are for information only and may differ at the pump.\n\nDeveloper: ARU Soft"
+  },
+  "ar": {
+    "title": "ياقيتلا: أسعار الوقود",
+    "shortDescription": "قارن أسعار الوقود في تركيا واحسب تكلفة رحلتك",
+    "fullDescription": "يساعدك ياقِتلا على متابعة أسعار محطات الوقود في تركيا حسب المدينة والمنطقة.\n\n• قارن أسعار البنزين 95 والديزل\n• اعثر على أفضل سعر بسرعة\n• افتح الاتجاهات في خرائط Google\n• احسب تكلفة الرحلة حسب المسافة والاستهلاك\n• دعم التركية والإنجليزية والعربية\n\nالأسعار لأغراض إعلامية وقد تختلف عند المضخة.\n\nالمطوّر: ARU Soft"
+  }
+}

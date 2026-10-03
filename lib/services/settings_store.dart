@@ -19,9 +19,14 @@ class SettingsStore extends ChangeNotifier {
   static const _kPinnedStationId = 'pinnedStationId';
 
   AppLang get lang {
-    final v = _prefs.getString(_kLang);
-    if (v == 'en') return AppLang.en;
-    return AppLang.tr;
+    switch (_prefs.getString(_kLang)) {
+      case 'en':
+        return AppLang.en;
+      case 'ar':
+        return AppLang.ar;
+      default:
+        return AppLang.tr;
+    }
   }
 
   ThemeMode get themeMode {
@@ -48,7 +53,12 @@ class SettingsStore extends ChangeNotifier {
   AppStrings get s => AppStrings(lang);
 
   Future<void> setLang(AppLang value) async {
-    await _prefs.setString(_kLang, value == AppLang.en ? 'en' : 'tr');
+    final code = switch (value) {
+      AppLang.en => 'en',
+      AppLang.ar => 'ar',
+      AppLang.tr => 'tr',
+    };
+    await _prefs.setString(_kLang, code);
     notifyListeners();
   }
 

@@ -15,7 +15,11 @@ import 'services/settings_store.dart';
 
 Future<void> bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initializeDateFormatting('tr_TR');
+  await Future.wait([
+    initializeDateFormatting('tr_TR'),
+    initializeDateFormatting('en'),
+    initializeDateFormatting('ar'),
+  ]);
   final prefs = await SharedPreferences.getInstance();
   final settings = SettingsStore(prefs);
   final cache = CatalogCache(prefs);
@@ -54,10 +58,16 @@ class YakitlaApp extends StatelessWidget {
             theme: AppTheme.light(),
             darkTheme: AppTheme.dark(),
             themeMode: store.themeMode,
-            locale: store.lang == AppLang.en
-                ? const Locale('en')
-                : const Locale('tr'),
-            supportedLocales: const [Locale('tr'), Locale('en')],
+            locale: switch (store.lang) {
+              AppLang.en => const Locale('en'),
+              AppLang.ar => const Locale('ar'),
+              AppLang.tr => const Locale('tr'),
+            },
+            supportedLocales: const [
+              Locale('tr'),
+              Locale('en'),
+              Locale('ar'),
+            ],
             localizationsDelegates: const [
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,

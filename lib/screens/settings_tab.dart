@@ -32,7 +32,11 @@ class _SettingsTabState extends State<SettingsTab> {
     });
   }
 
-  String _langLabel(AppLang lang) => lang == AppLang.en ? 'English' : 'Türkçe';
+  String _langLabel(AppLang lang) => switch (lang) {
+        AppLang.tr => 'Türkçe',
+        AppLang.en => 'English',
+        AppLang.ar => 'العربية',
+      };
 
   String _themeLabel(AppStrings s, ThemeMode mode) {
     switch (mode) {
@@ -72,22 +76,15 @@ class _SettingsTabState extends State<SettingsTab> {
               if (_langOpen) _themeOpen = false;
             }),
             children: [
-              _ChoiceTile(
-                label: 'Türkçe',
-                selected: settings.lang == AppLang.tr,
-                onTap: () {
-                  settings.setLang(AppLang.tr);
-                  setState(() => _langOpen = false);
-                },
-              ),
-              _ChoiceTile(
-                label: 'English',
-                selected: settings.lang == AppLang.en,
-                onTap: () {
-                  settings.setLang(AppLang.en);
-                  setState(() => _langOpen = false);
-                },
-              ),
+              for (final lang in AppLang.values)
+                _ChoiceTile(
+                  label: _langLabel(lang),
+                  selected: settings.lang == lang,
+                  onTap: () {
+                    settings.setLang(lang);
+                    setState(() => _langOpen = false);
+                  },
+                ),
             ],
           ),
           _ExpandableChoice(
@@ -339,18 +336,21 @@ class _ChoiceTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return ListTile(
-      dense: true,
-      title: Text(
-        label,
-        style: TextStyle(
-          fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
+    return Material(
+      color: Colors.transparent,
+      child: ListTile(
+        dense: true,
+        title: Text(
+          label,
+          style: TextStyle(
+            fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
+          ),
         ),
+        trailing: selected
+            ? Icon(Icons.check_rounded, color: scheme.primary, size: 20)
+            : null,
+        onTap: onTap,
       ),
-      trailing: selected
-          ? Icon(Icons.check_rounded, color: scheme.primary, size: 20)
-          : null,
-      onTap: onTap,
     );
   }
 }
