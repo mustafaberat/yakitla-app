@@ -59,6 +59,9 @@ play/gorseller/tablet/
 play/gorseller/pc/
 play/gorseller/chromebook/
 
+# Live API fixtures for screenshot capture
+tool/fixtures/
+
 
 # Android Studio will place build artifacts here
 /android/app/debug

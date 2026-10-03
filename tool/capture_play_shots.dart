@@ -1,8 +1,12 @@
-/// Play Console screenshots for Yakıtla (tr / en / ar).
+/// Play Console phone screenshots for Yakıtla (tr / en / ar).
+///
+/// Uses real BFF data (default `http://localhost:3000`, override with
+/// `YAKITLA_API_BASE`) and a true phone logical viewport (390×844 @3x).
 ///
 /// Run: `APP_ROOT=. ../lib/scripts/generate_game_images.sh`
 library;
 
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -24,44 +28,86 @@ import 'package:yakitla/services/catalog_cache.dart';
 import 'package:yakitla/services/fuel_controller.dart';
 import 'package:yakitla/services/settings_store.dart';
 
-const Size _phoneSize = Size(1080, 1920);
+/// Phone logical size; rendered at 3× → 1170×2532 px (Play-friendly).
+const Size _logicalPhone = Size(390, 844);
+const double _dpr = 3;
 const String _outRoot = 'play/gorseller';
+const String _cityId = '34';
+const String _districtId = '436'; // KADIKÖY
 
-List<Station> _mockStations() {
-  Station s({
-    required String id,
-    required String brand,
-    required String name,
-    required double gas,
-    required double diesel,
-  }) {
-    return Station(
-      id: id,
-      name: name,
-      brand: brand,
-      address: 'Kadıköy, İstanbul',
-      city: 'İSTANBUL',
-      district: 'KADIKÖY',
-      latitude: 40.99,
-      longitude: 29.03,
-      hasExactLocation: true,
-      prices: FuelPrices(gasoline: gas, diesel: diesel),
-      updatedAt: '2026-10-03T10:00:00.000Z',
-      cityId: '34',
-      districtId: '34-kadikoy',
+class _LiveCatalog {
+  _LiveCatalog({
+    required this.cities,
+    required this.districts,
+    required this.stations,
+    required this.updatedAt,
+  });
+
+  final List<City> cities;
+  final List<District> districts;
+  final List<Station> stations;
+  final String updatedAt;
+}
+
+/// Real BFF data via curl (flutter_test stubs HttpClient → always 400).
+Future<_LiveCatalog> _loadLiveCatalog() async {
+  final base = (Platform.environment['YAKITLA_API_BASE'] ??
+          'http://localhost:3000')
+      .replaceAll(RegExp(r'/$'), '');
+  final fix = Directory('tool/fixtures');
+  fix.createSync(recursive: true);
+
+  Future<void> curl(String url, String out) async {
+    final r = await Process.run('curl', ['-fsS', '-m', '90', url, '-o', out]);
+    if (r.exitCode != 0) {
+      throw StateError('curl failed $url: ${r.stderr}');
+    }
+  }
+
+  await curl('$base/api/v1/fuel/cities', '${fix.path}/cities.json');
+  await curl(
+    '$base/api/v1/fuel/districts?cityId=$_cityId',
+    '${fix.path}/districts.json',
+  );
+  await curl(
+    '$base/api/v1/fuel/stations?cityId=$_cityId&districtId=$_districtId',
+    '${fix.path}/stations.json',
+  );
+
+  Map<String, dynamic> read(String name) =>
+      jsonDecode(File('${fix.path}/$name').readAsStringSync())
+          as Map<String, dynamic>;
+
+  final cities = (read('cities.json')['items'] as List? ?? const [])
+      .whereType<Map<String, dynamic>>()
+      .map(City.fromJson)
+      .toList();
+  final districts = (read('districts.json')['items'] as List? ?? const [])
+      .whereType<Map<String, dynamic>>()
+      .map(District.fromJson)
+      .toList();
+  final stationsRes = StationsResponse.fromJson(read('stations.json'));
+  if (stationsRes.items.isEmpty) {
+    throw StateError(
+      'No stations from $base for city=$_cityId district=$_districtId',
     );
   }
 
-  return [
-    s(id: '1', brand: 'GO', name: 'GO Moda', gas: 48.42, diesel: 46.10),
-    s(id: '2', brand: 'Kadoil', name: 'Kadoil Caferağa', gas: 48.90, diesel: 46.55),
-    s(id: '3', brand: 'Opet', name: 'Opet Acıbadem', gas: 49.05, diesel: 46.80),
-    s(id: '4', brand: 'Shell', name: 'Shell Caddebostan', gas: 48.70, diesel: 46.40),
-  ];
+  final stations = [...stationsRes.items]..sort((a, b) {
+      final pa = a.prices.gasoline ?? double.infinity;
+      final pb = b.prices.gasoline ?? double.infinity;
+      return pa.compareTo(pb);
+    });
+
+  return _LiveCatalog(
+    cities: cities,
+    districts: districts,
+    stations: stations,
+    updatedAt: stationsRes.updatedAt,
+  );
 }
 
 ThemeData _shotTheme() {
-  // Local Arial ("ShotSans") — GoogleFonts network is disabled in tests.
   final base = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
@@ -76,8 +122,16 @@ ThemeData _shotTheme() {
     scaffoldBackgroundColor: YakitlaColors.canvas,
   );
   return base.copyWith(
-    textTheme: base.textTheme.apply(fontFamily: 'ShotSans'),
-    primaryTextTheme: base.primaryTextTheme.apply(fontFamily: 'ShotSans'),
+    textTheme: base.textTheme.apply(
+      fontFamily: 'ShotSans',
+      fontFamilyFallback: const ['ShotArabic'],
+      bodyColor: YakitlaColors.ink,
+      displayColor: YakitlaColors.ink,
+    ),
+    primaryTextTheme: base.primaryTextTheme.apply(
+      fontFamily: 'ShotSans',
+      fontFamilyFallback: const ['ShotArabic'],
+    ),
   );
 }
 
@@ -87,12 +141,25 @@ Future<void> _loadShotFonts() async {
     return ByteData.sublistView(data);
   }
 
-  // Arial Unicode covers TR/AR glyphs for Play screenshots.
+  final dir = Directory('tool/fonts');
+  final notoReg = File('${dir.path}/NotoSans-Regular.ttf');
+  final notoBold = File('${dir.path}/NotoSans-Bold.ttf');
+  final notoAr = File('${dir.path}/NotoSansArabic-Regular.ttf');
+
   final sans = FontLoader('ShotSans');
-  final unicode = File('/Library/Fonts/Arial Unicode.ttf');
-  final arial = File('/System/Library/Fonts/Supplemental/Arial.ttf');
-  sans.addFont(fileBytes(unicode.existsSync() ? unicode.path : arial.path));
+  if (notoReg.existsSync()) {
+    sans.addFont(fileBytes(notoReg.path));
+    if (notoBold.existsSync()) sans.addFont(fileBytes(notoBold.path));
+  } else {
+    sans.addFont(fileBytes('/Library/Fonts/Arial Unicode.ttf'));
+  }
   await sans.load();
+
+  if (notoAr.existsSync()) {
+    final arabic = FontLoader('ShotArabic');
+    arabic.addFont(fileBytes(notoAr.path));
+    await arabic.load();
+  }
 
   final root = Platform.environment['FLUTTER_ROOT'];
   if (root != null) {
@@ -112,6 +179,13 @@ void main() {
 
   testWidgets('Play gorsellerini yaz', (tester) async {
     await tester.runAsync(_loadShotFonts);
+
+    late _LiveCatalog catalog;
+    await tester.runAsync(() async {
+      catalog = await _loadLiveCatalog();
+      // ignore: avoid_print
+      print('live stations=${catalog.stations.length}');
+    });
 
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
@@ -142,8 +216,8 @@ void main() {
 
       await prefs.clear();
       await prefs.setString('lang', folder);
-      await prefs.setString('cityId', '34');
-      await prefs.setString('districtId', '34-kadikoy');
+      await prefs.setString('cityId', _cityId);
+      await prefs.setString('districtId', _districtId);
 
       final settings = SettingsStore(prefs);
       await settings.setLang(lang);
@@ -151,15 +225,13 @@ void main() {
         settings: settings,
         cache: CatalogCache(prefs),
       )
-        ..cities = const [City(id: '34', name: 'İSTANBUL')]
-        ..districts = const [
-          District(id: '34-kadikoy', cityId: '34', name: 'KADIKÖY'),
-        ]
-        ..cityId = '34'
-        ..districtId = '34-kadikoy'
-        ..stations = _mockStations()
+        ..cities = catalog.cities
+        ..districts = catalog.districts
+        ..cityId = _cityId
+        ..districtId = _districtId
+        ..stations = catalog.stations
         ..state = LoadState.success
-        ..updatedAt = '2026-10-03T10:00:00.000Z'
+        ..updatedAt = catalog.updatedAt
         ..locating = false;
       fuel.selected = fuel.stations.first;
 
@@ -172,64 +244,72 @@ void main() {
       };
 
       for (final shot in bodies.entries) {
-        _setView(tester, _phoneSize);
+        _setPhoneView(tester);
         final key = GlobalKey();
         await tester.pumpWidget(
           RepaintBoundary(
             key: key,
-            child: MultiProvider(
-              providers: [
-                ChangeNotifierProvider.value(value: settings),
-                ChangeNotifierProvider.value(value: fuel),
-                ProxyProvider<SettingsStore, AppStrings>(
-                  update: (_, store, __) => store.s,
-                ),
-              ],
-              child: MaterialApp(
-                debugShowCheckedModeBanner: false,
-                theme: _shotTheme(),
-                locale: switch (lang) {
-                  AppLang.en => const Locale('en'),
-                  AppLang.ar => const Locale('ar'),
-                  AppLang.tr => const Locale('tr'),
-                },
-                supportedLocales: const [
-                  Locale('tr'),
-                  Locale('en'),
-                  Locale('ar'),
+            child: MediaQuery(
+              data: MediaQueryData(
+                size: _logicalPhone,
+                devicePixelRatio: _dpr,
+                padding: const EdgeInsets.only(top: 47, bottom: 34),
+                textScaler: TextScaler.noScaling,
+              ),
+              child: MultiProvider(
+                providers: [
+                  ChangeNotifierProvider.value(value: settings),
+                  ChangeNotifierProvider.value(value: fuel),
+                  ProxyProvider<SettingsStore, AppStrings>(
+                    update: (_, store, __) => store.s,
+                  ),
                 ],
-                localizationsDelegates: const [
-                  GlobalMaterialLocalizations.delegate,
-                  GlobalWidgetsLocalizations.delegate,
-                  GlobalCupertinoLocalizations.delegate,
-                ],
-                home: Scaffold(
-                  body: shot.value,
-                  bottomNavigationBar: NavigationBar(
-                    selectedIndex: shot.key.startsWith('02') ||
-                            shot.key.startsWith('05')
-                        ? 1
-                        : shot.key.startsWith('03')
-                            ? 2
-                            : 0,
-                    destinations: [
-                      NavigationDestination(
-                        icon: const Icon(Icons.local_gas_station_outlined),
-                        selectedIcon:
-                            const Icon(Icons.local_gas_station_rounded),
-                        label: settings.s.tabPrices,
-                      ),
-                      NavigationDestination(
-                        icon: const Icon(Icons.calculate_outlined),
-                        selectedIcon: const Icon(Icons.calculate_rounded),
-                        label: settings.s.tabCalculate,
-                      ),
-                      NavigationDestination(
-                        icon: const Icon(Icons.settings_outlined),
-                        selectedIcon: const Icon(Icons.settings_rounded),
-                        label: settings.s.tabSettings,
-                      ),
-                    ],
+                child: MaterialApp(
+                  debugShowCheckedModeBanner: false,
+                  theme: _shotTheme(),
+                  locale: switch (lang) {
+                    AppLang.en => const Locale('en'),
+                    AppLang.ar => const Locale('ar'),
+                    AppLang.tr => const Locale('tr'),
+                  },
+                  supportedLocales: const [
+                    Locale('tr'),
+                    Locale('en'),
+                    Locale('ar'),
+                  ],
+                  localizationsDelegates: const [
+                    GlobalMaterialLocalizations.delegate,
+                    GlobalWidgetsLocalizations.delegate,
+                    GlobalCupertinoLocalizations.delegate,
+                  ],
+                  home: Scaffold(
+                    body: shot.value,
+                    bottomNavigationBar: NavigationBar(
+                      selectedIndex: shot.key.startsWith('02') ||
+                              shot.key.startsWith('05')
+                          ? 1
+                          : shot.key.startsWith('03')
+                              ? 2
+                              : 0,
+                      destinations: [
+                        NavigationDestination(
+                          icon: const Icon(Icons.local_gas_station_outlined),
+                          selectedIcon:
+                              const Icon(Icons.local_gas_station_rounded),
+                          label: settings.s.tabPrices,
+                        ),
+                        NavigationDestination(
+                          icon: const Icon(Icons.calculate_outlined),
+                          selectedIcon: const Icon(Icons.calculate_rounded),
+                          label: settings.s.tabCalculate,
+                        ),
+                        NavigationDestination(
+                          icon: const Icon(Icons.settings_outlined),
+                          selectedIcon: const Icon(Icons.settings_rounded),
+                          label: settings.s.tabSettings,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -237,8 +317,13 @@ void main() {
           ),
         );
         await tester.pump();
-        await tester.pump(const Duration(milliseconds: 50));
-        await tester.pump(const Duration(milliseconds: 50));
+        await tester.pump(const Duration(milliseconds: 100));
+        await tester.pump(const Duration(milliseconds: 100));
+        // Allow brand PNG/SVG decode.
+        await tester.binding.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 200)),
+        );
+        await tester.pump();
         await _writePng(tester, key, '$_outRoot/$folder/${shot.key}.png');
       }
 
@@ -248,12 +333,15 @@ void main() {
         featureSrc.copySync(dest.path);
       }
     }
-  }, timeout: const Timeout(Duration(minutes: 3)));
+  }, timeout: const Timeout(Duration(minutes: 4)));
 }
 
-void _setView(WidgetTester tester, Size size) {
-  tester.view.physicalSize = size;
-  tester.view.devicePixelRatio = 1.0;
+void _setPhoneView(WidgetTester tester) {
+  tester.view.physicalSize = Size(
+    _logicalPhone.width * _dpr,
+    _logicalPhone.height * _dpr,
+  );
+  tester.view.devicePixelRatio = _dpr;
   tester.view.padding = FakeViewPadding.zero;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
@@ -269,7 +357,7 @@ Future<void> _writePng(
   final bytes = await tester.binding.runAsync(() async {
     final boundary =
         key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
-    final image = await boundary.toImage(pixelRatio: 1.0);
+    final image = await boundary.toImage(pixelRatio: _dpr);
     final data = await image.toByteData(format: ui.ImageByteFormat.png);
     return data!.buffer.asUint8List();
   });

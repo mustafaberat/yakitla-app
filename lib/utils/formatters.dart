@@ -6,20 +6,15 @@ import '../models/models.dart';
 
 String formatPrice(double? value, {String dash = '—'}) {
   if (value == null || value <= 0) return dash;
-  final n = NumberFormat.currency(
-    locale: 'tr_TR',
-    symbol: '₺',
-    decimalDigits: 2,
-  );
-  return n.format(value);
+  // Explicit ₺ + tr digits — avoids tofu when a font lacks the currency glyph
+  // from NumberFormat.currency's composed symbol.
+  final n = NumberFormat('#,##0.00', 'tr_TR');
+  return '₺${n.format(value)}';
 }
 
 String formatMoney(double value) {
-  return NumberFormat.currency(
-    locale: 'tr_TR',
-    symbol: '₺',
-    decimalDigits: 2,
-  ).format(value);
+  final n = NumberFormat('#,##0.00', 'tr_TR');
+  return '₺${n.format(value)}';
 }
 
 String formatUpdatedAt(String iso, {String todayLabel = 'Bugün', String dash = '—'}) {
