@@ -1,0 +1,18 @@
+<tr-TR>
+İlk sürüm.
+</tr-TR>
+<en-US>
+First release.
+</en-US>
+<es-419>
+Primera versión.
+</es-419>
+<pt-BR>
+Primeira versão.
+</pt-BR>
+<id>
+Rilis pertama.
+</id>
+<hi-IN>
+पहला संस्करण।
+</hi-IN>

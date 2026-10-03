@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Akaryakıt">
+  <rect width="64" height="64" rx="14" fill="#2A3340"/>
+  <path fill="#F4B860" d="M22 18h14c5 0 9 4 9 9v19H31c-5 0-9-4-9-9V18z"/>
+  <path fill="#F4B860" d="M45 26h4c2 0 4 2 4 4v12c0 2-1.5 3.5-3.5 3.5S46 44 46 42V34"/>
+  <rect x="25" y="22" width="8" height="5" rx="1" fill="#2A3340"/>
+</svg>

@@ -1,0 +1,24 @@
+---
+description: Ortak Flutter scriptleri mobile-apps/lib'den oku; oyuna kopyalama
+alwaysApply: true
+---
+
+# Shared scripts
+
+Release, web ve Play görsel scriptleri bu repoda yok. Kaynak (oyun kökünden):
+
+`../lib/scripts/`
+
+Oyun kökünden:
+
+```bash
+APP_ROOT=. ../lib/scripts/install_release.sh
+APP_ROOT=. ../lib/scripts/run_web.sh
+APP_ROOT=. ../lib/scripts/generate_game_images.sh
+```
+
+- Bu scriptleri `scripts/` altına kopyalama veya sarmalayıcı yazma.
+- Düzeltme sadece `mobile-apps/lib/scripts/` içinde.
+- Oyuna özel kalan: `tool/capture_play_shots.dart` ve ikon kaynakları.
+- Sürüm notu şablonu: `../lib/play/whatsnew.template.txt` → oyunda `play/whatsnew.txt`
+- Absolute path (`…/Projects/…`) yazma; workspace klasör adı değişebilir.
