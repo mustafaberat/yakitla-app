@@ -1,43 +1,26 @@
-# Yakıtla — Google Play checklist
+# Yakıtla — Google Play
 
-## Hazır
+Paket: `com.arusoft.yakitla` · ARU Soft
 
-- İkon: `play/yakitla-icon-d-split-y.png` → launcher + `play/icon-512.png`
-- Feature graphic: `play/feature-graphic.png` (1024×500)
-- Ekran görselleri: `play/gorseller/{tr,en,ar}/01-*.png` (+ `feature.png`)
-- Listing metinleri: `play/listings.json` (tr-TR, en-US, ar)
-- Release: `play/versions/1/yakitla.aab` + `.apk`
-- Keystore: `android/keystore/yakitla-upload.jks` (gitignore)
-- Paket: `com.arusoft.yakitla` · Developer: ARU Soft
-- Gizlilik: https://yakitla.vercel.app/privacy
-- Destek: arusoft.company@gmail.com
-- Dil: TR / EN / AR (Ayarlar)
+## API ile tamamlandı
 
-## Sende (Play Console — API app oluşturamaz)
+- [x] Store listing tr-TR / en-US / ar
+- [x] İkon 512, feature graphic, telefon screenshot (3 dil)
+- [x] Contact: arusoft.company@gmail.com · https://yakitla.vercel.app
+- [x] AAB `1.0.0` (versionCode 1) → **internal** track, status **completed**
+- [x] Release notes tr / en / ar
 
-1. [Uygulama oluştur](https://play.google.com/console/u/0/developers/6672624803399105178/app-create)
-   - Ad: **Yakıtla**
-   - Varsayılan dil: Türkçe (Türkiye)
-   - Uygulama / Ücretsiz
-2. Oluşunca agent’a söyle; listing + screenshot + AAB yükleriz:
+## Console’da sen (API yok / form zorunlu)
 
-```bash
-cd mobile-apps
-python3 lib/play/upload_listings.py \
-  --package com.arusoft.yakitla \
-  --file yakitla/play/listings.json
+Bunlar Play Console anket/form; service account ile doldurulmuyor:
 
-python3 lib/play/upload_screenshots.py \
-  --package com.arusoft.yakitla \
-  --dir yakitla/play/gorseller \
-  --types phone,feature,icon
+1. **Privacy policy** → https://yakitla.vercel.app/privacy  
+   App content → Privacy policy
+2. **Data safety** — konum (opsiyonel), ağ; Ads: No; data sold: No
+3. **Content rating** anketi (Utility)
+4. **Target audience** (18+ veya All; çocuklara yönelik değil)
+5. **Internal testers** e-posta listesi (test etmek için)
+6. Production’a çıkınca: Countries + Pricing (ücretsiz)
 
-python3 lib/play/upload_aab.py \
-  --package com.arusoft.yakitla \
-  --aab yakitla/play/versions/1/yakitla.aab \
-  --whatsnew yakitla/play/whatsnew.txt \
-  --track internal \
-  --status draft
-```
-
-3. Console’da Data safety + Content rating + Countries doldur.
+Dashboard: https://play.google.com/console/u/0/developers/6672624803399105178/app/com.arusoft.yakitla/app-dashboard  
+Internal: https://play.google.com/console/u/0/developers/6672624803399105178/app/com.arusoft.yakitla/tracks/internal
