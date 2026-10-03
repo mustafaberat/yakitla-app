@@ -31,7 +31,8 @@ import 'package:yakitla/services/settings_store.dart';
 /// Phone logical size; rendered at 3× → 1170×2532 px (Play-friendly).
 const Size _logicalPhone = Size(390, 844);
 const double _dpr = 3;
-const String _outRoot = 'play/gorseller';
+/// Plain UI captures (vitrine compositor reads from here).
+const String _outRoot = 'play/gorseller/raw';
 const String _cityId = '34';
 const String _districtId = '436'; // KADIKÖY
 
@@ -121,16 +122,27 @@ ThemeData _shotTheme() {
     ),
     scaffoldBackgroundColor: YakitlaColors.canvas,
   );
+  final textTheme = base.textTheme.apply(
+    fontFamily: 'ShotSans',
+    fontFamilyFallback: const ['ShotArabic'],
+    bodyColor: YakitlaColors.ink,
+    displayColor: YakitlaColors.ink,
+  );
   return base.copyWith(
-    textTheme: base.textTheme.apply(
-      fontFamily: 'ShotSans',
-      fontFamilyFallback: const ['ShotArabic'],
-      bodyColor: YakitlaColors.ink,
-      displayColor: YakitlaColors.ink,
-    ),
+    textTheme: textTheme,
     primaryTextTheme: base.primaryTextTheme.apply(
       fontFamily: 'ShotSans',
       fontFamilyFallback: const ['ShotArabic'],
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        textStyle: textTheme.labelLarge?.copyWith(
+          fontFamily: 'ShotSans',
+          fontFamilyFallback: const ['ShotArabic'],
+          fontWeight: FontWeight.w700,
+          fontSize: 16,
+        ),
+      ),
     ),
   );
 }
@@ -202,7 +214,8 @@ void main() {
 
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
-    final featureSrc = File('$_outRoot/ozellik-grafik/yakitla-1024x500.png');
+    final featureSrc =
+        File('play/gorseller/ozellik-grafik/yakitla-1024x500.png');
 
     const langs = <(String, AppLang)>[
       ('tr', AppLang.tr),
@@ -237,10 +250,12 @@ void main() {
 
       final bodies = <String, Widget>{
         '01-home': const PricesTab(),
-        '02-duel': const CalculateTab(),
+        '02-duel': const CalculateTab(
+          demoSelectFirstBrand: true,
+          demoDistanceKm: 420,
+          demoConsumptionLPer100: 7.2,
+        ),
         '03-setup': const SettingsTab(),
-        '04-howto': const PricesTab(),
-        '05-over': const CalculateTab(),
       };
 
       for (final shot in bodies.entries) {
@@ -319,16 +334,26 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
         await tester.pump(const Duration(milliseconds: 100));
-        // Allow brand PNG/SVG decode.
+        // Allow brand PNG/SVG decode + demo calculate seed.
         await tester.binding.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 200)),
+          () => Future<void>.delayed(const Duration(milliseconds: 250)),
         );
         await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+        // Keep scroll at top so station + Hesapla label stay in frame with results.
+        if (shot.key == '02-duel') {
+          final list = find.byType(Scrollable);
+          if (list.evaluate().isNotEmpty) {
+            await tester.drag(list.first, const Offset(0, 400));
+            await tester.pumpAndSettle();
+          }
+        }
         await _writePng(tester, key, '$_outRoot/$folder/${shot.key}.png');
       }
 
+      // Feature graphic lives next to locale folders, not under raw/.
       if (featureSrc.existsSync()) {
-        final dest = File('$_outRoot/$folder/feature.png');
+        final dest = File('play/gorseller/$folder/feature.png');
         dest.parent.createSync(recursive: true);
         featureSrc.copySync(dest.path);
       }

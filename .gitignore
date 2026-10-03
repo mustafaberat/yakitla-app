@@ -53,11 +53,15 @@ app.*.map.json
 *.aab
 *.apk
 
-# Play screenshots (generated)
+# Play screenshots (generated / unused form factors)
 play/gorseller/telefon/
 play/gorseller/tablet/
 play/gorseller/pc/
 play/gorseller/chromebook/
+
+# Plain UI captures — regenerable via capture_play_shots.dart
+# Final vitrines live in play/gorseller/{tr,en,ar}/ and ARE committed.
+play/gorseller/raw/
 
 # Live API fixtures for screenshot capture
 tool/fixtures/

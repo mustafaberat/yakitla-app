@@ -15,7 +15,17 @@ import '../widgets/calc_unit_field.dart';
 import '../widgets/station_pick_card.dart';
 
 class CalculateTab extends StatefulWidget {
-  const CalculateTab({super.key});
+  const CalculateTab({
+    super.key,
+    this.demoDistanceKm,
+    this.demoConsumptionLPer100,
+    this.demoSelectFirstBrand = false,
+  });
+
+  /// Play / marketing shot helpers — leave null in normal app use.
+  final double? demoDistanceKm;
+  final double? demoConsumptionLPer100;
+  final bool demoSelectFirstBrand;
 
   @override
   State<CalculateTab> createState() => _CalculateTabState();
@@ -32,6 +42,7 @@ class _CalculateTabState extends State<CalculateTab> {
   String? _distanceError;
   String? _consumptionError;
   String? _priceError;
+  bool _demoSeeded = false;
 
   @override
   void dispose() {
@@ -39,6 +50,35 @@ class _CalculateTabState extends State<CalculateTab> {
     _consumption.dispose();
     _price.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_demoSeeded || !widget.demoSelectFirstBrand) return;
+    _demoSeeded = true;
+
+    final fuel = context.read<FuelController>();
+    final s = context.read<AppStrings>();
+    final brands = brandAverageStations(fuel.stations);
+    if (brands.isEmpty) return;
+
+    _brand = brands.first;
+    if (widget.demoDistanceKm != null) {
+      final d = widget.demoDistanceKm!;
+      _distance.text = d == d.roundToDouble()
+          ? d.toStringAsFixed(0)
+          : d.toStringAsFixed(1);
+    }
+    if (widget.demoConsumptionLPer100 != null) {
+      _consumption.text =
+          widget.demoConsumptionLPer100!.toStringAsFixed(1);
+    }
+    _syncPriceFromBrand(fuel.fuelType);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _run(s);
+    });
   }
 
   void _syncPriceFromBrand(String fuelType) {
@@ -443,10 +483,10 @@ class _CalculateTabState extends State<CalculateTab> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      textStyle: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
-                      ),
+                      textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
                     ),
                     child: Text(s.calculate),
                   ),
